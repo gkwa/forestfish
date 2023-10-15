@@ -68,7 +68,9 @@ func CloseFile(f *os.File) {
 	}
 }
 
+// obsolete, use RunCmd instead
 func CmdRun(cmd *exec.Cmd, cwd, stdOutLog, stdErrLog string) {
+	// obsolete, use RunCmd instead
 	cmd.Dir = cwd
 
 	var stdout, stderr bytes.Buffer
@@ -82,13 +84,6 @@ func CmdRun(cmd *exec.Cmd, cwd, stdOutLog, stdErrLog string) {
 	}
 
 	outStr, errStr := stdout.String(), stderr.String()
-
-	_, err = cmd.Output()
-	if werr, ok := err.(*exec.ExitError); ok {
-		if s := werr.Error(); s != "0" {
-			return false
-		}
-	}
 
 	slog.Debug("command output", "cmd", cmd.String(), "output", outStr)
 
