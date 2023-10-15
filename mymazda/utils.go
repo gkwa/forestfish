@@ -46,7 +46,7 @@ func CmdRun(cmd *exec.Cmd, cwd, stdOutLog, stdErrLog string) {
 	slog.Debug("running command", "cmd", cmd.String(), "cwd", cwd)
 	err := cmd.Run()
 	if err != nil {
-		slog.Error("error running command", "cmd", cmd, "error", err.Error())
+		slog.Error("error running command", "cmd", cmd.String(), "error", err.Error())
 	}
 
 	outStr, errStr := stdout.String(), stderr.String()
