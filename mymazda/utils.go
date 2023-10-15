@@ -51,6 +51,10 @@ func CmdRun(cmd *exec.Cmd, cwd, stdOutLog, stdErrLog string) {
 
 	outStr, errStr := stdout.String(), stderr.String()
 
+	slog.Debug("command output", "cmd", cmd.String(), "output", outStr)
+
+	slog.Error("command error", "cmd", cmd.String(), "error", errStr)
+
 	if stdout.Len() > 0 {
 		f := CreateFile(stdOutLog)
 		defer CloseFile(f)
