@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strconv"
 )
 
 func FileExists(path string) bool {
@@ -15,6 +16,37 @@ func FileExists(path string) bool {
 	} else {
 		panic(err)
 	}
+}
+
+func DirExists(path string) bool {
+	fileInfo, err := os.Stat(path)
+
+	if err == nil {
+		if fileInfo.IsDir() {
+			return true
+		} else {
+			slog.Error("not a directory", "path", path)
+			return false
+		}
+	} else if os.IsNotExist(err) {
+		slog.Debug("directory does not exist", "path", path)
+		return false
+	} else {
+		slog.Error("error checking directory", "path", path, err.Error())
+		return false
+	}
+}
+
+func IsPortOpen(host string, port int) bool {
+	args := []string{"-z", host, strconv.Itoa(port), "-G", "5"}
+	cmd := exec.Command("/usr/bin/nc", args...)
+	_, err := cmd.Output()
+	if werr, ok := err.(*exec.ExitError); ok {
+		if s := werr.Error(); s != "0" {
+			return false
+		}
+	}
+	return true
 }
 
 func CreateFile(p string) *os.File {
@@ -50,6 +82,13 @@ func CmdRun(cmd *exec.Cmd, cwd, stdOutLog, stdErrLog string) {
 	}
 
 	outStr, errStr := stdout.String(), stderr.String()
+
+	_, err = cmd.Output()
+	if werr, ok := err.(*exec.ExitError); ok {
+		if s := werr.Error(); s != "0" {
+			return false
+		}
+	}
 
 	slog.Debug("command output", "cmd", cmd.String(), "output", outStr)
 
