@@ -1,1 +1,7 @@
 Utility packages
+
+```
+f := createFile(stdOutLog)
+defer closeFile(f)
+f.WriteString(outStr)
+```
