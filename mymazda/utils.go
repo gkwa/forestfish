@@ -1,11 +1,10 @@
 package file
 
 import (
-	"bytes"
 	"log/slog"
 	"os"
-	"os/exec"
-	"strconv"
+	"os/user"
+	"strings"
 )
 
 func FileExists(path string) bool {
@@ -37,18 +36,6 @@ func DirExists(path string) bool {
 	}
 }
 
-func IsPortOpen(host string, port int) bool {
-	args := []string{"-z", host, strconv.Itoa(port), "-G", "5"}
-	cmd := exec.Command("/usr/bin/nc", args...)
-	_, err := cmd.Output()
-	if werr, ok := err.(*exec.ExitError); ok {
-		if s := werr.Error(); s != "0" {
-			return false
-		}
-	}
-	return true
-}
-
 func CreateFile(p string) *os.File {
 	// https://gobyexample.com/defer
 	f, err := os.Create(p)
@@ -68,38 +55,13 @@ func CloseFile(f *os.File) {
 	}
 }
 
-// obsolete, use RunCmd instead
-func CmdRun(cmd *exec.Cmd, cwd, stdOutLog, stdErrLog string) {
-	// obsolete, use RunCmd instead
-	cmd.Dir = cwd
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	slog.Debug("running command", "cmd", cmd.String(), "cwd", cwd)
-	err := cmd.Run()
-	if err != nil {
-		slog.Error("error running command", "cmd", cmd.String(), "error", err.Error())
+func ExpandTilde(path string) (string, error) {
+	if strings.HasPrefix(path, "~/") || path == "~" {
+		currentUser, err := user.Current()
+		if err != nil {
+			return "", err
+		}
+		return strings.Replace(path, "~", currentUser.HomeDir, 1), nil
 	}
-
-	outStr, errStr := stdout.String(), stderr.String()
-
-	slog.Debug("command output", "cmd", cmd.String(), "output", outStr)
-
-	slog.Error("command error", "cmd", cmd.String(), "error", errStr)
-
-	if stdout.Len() > 0 {
-		f := CreateFile(stdOutLog)
-		defer CloseFile(f)
-
-		f.WriteString(outStr)
-	}
-
-	if stderr.Len() > 0 {
-		f := CreateFile(stdErrLog)
-		defer CloseFile(f)
-
-		f.WriteString(errStr)
-	}
+	return path, nil
 }
